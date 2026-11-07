@@ -107,3 +107,6 @@ Before exploring the data, three main questions were defined:
    ```bash
    jupyter notebook titanic_eda.ipynb
    ```
+
+## Author 
+   Ashish Balodia 

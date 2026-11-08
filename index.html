@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Titanic EDA | Exploratory Data Analysis & Survival Patterns</title>
+  <meta name="description" content="Production-ready Exploratory Data Analysis (EDA) on the Titanic dataset, uncovering hidden survival patterns, statistical insights, and an interactive survival calculator.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚢</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .tab-btn.active {
+      border-color: #0284c7;
+      color: #0284c7;
+      background-color: #f0f9ff;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-slate-900 text-slate-300 px-4 py-2 text-xs md:text-sm font-medium flex justify-between items-center border-b border-slate-800">
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400">
+        Live Project
+      </span>
+      <span>InternCircle — Data Science & AI Project 01</span>
+    </div>
+    <div class="flex items-center space-x-4">
+      <a href="https://github.com/ashisbalodia1/EDA-on-Titanic-" target="_blank" rel="noopener noreferrer" class="hover:text-white transition flex items-center space-x-1.5">
+        <i class="fab fa-github text-sm"></i>
+        <span>GitHub Repo</span>
+      </a>
+      <a href="titanic_eda.ipynb" download class="hover:text-white transition flex items-center space-x-1.5 hidden sm:flex">
+        <i class="fas fa-download text-xs"></i>
+        <span>Download .ipynb</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Header / Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-md">
+            🚢
+          </div>
+          <div>
+            <h1 class="text-lg md:text-xl font-bold text-slate-900 leading-tight">Titanic Survival EDA</h1>
+            <p class="text-xs text-slate-500 font-medium">Statistical Analysis & Hidden Pattern Discovery</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn active px-3.5 py-2 text-sm font-semibold rounded-lg border border-transparent transition flex items-center space-x-2">
+            <i class="fas fa-chart-pie"></i>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="switchTab('patterns')" id="nav-patterns" class="tab-btn px-3.5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg border border-transparent transition flex items-center space-x-2">
+            <i class="fas fa-search-nodes"></i>
+            <span>Hidden Patterns</span>
+          </button>
+          <button onclick="switchTab('calculator')" id="nav-calculator" class="tab-btn px-3.5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg border border-transparent transition flex items-center space-x-2">
+            <i class="fas fa-calculator"></i>
+            <span>Survival Estimator</span>
+          </button>
+          <button onclick="switchTab('notebook')" id="nav-notebook" class="tab-btn px-3.5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg border border-transparent transition flex items-center space-x-2">
+            <i class="fas fa-book-open"></i>
+            <span>Full Notebook</span>
+          </button>
+        </nav>
+
+        <!-- Right Quick Action -->
+        <div class="flex items-center space-x-2">
+          <a href="titanic_eda.html" target="_blank" class="inline-flex items-center px-3.5 py-2 border border-slate-300 rounded-lg text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition">
+            <i class="fas fa-external-link-alt mr-1.5 text-xs text-slate-400"></i>
+            HTML View
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden border-t border-slate-200 px-4 py-2 flex justify-around bg-slate-50 text-xs font-medium">
+      <button onclick="switchTab('dashboard')" class="mobile-tab-btn text-sky-600 font-bold py-1 px-2" id="mob-dashboard">Dashboard</button>
+      <button onclick="switchTab('patterns')" class="mobile-tab-btn text-slate-600 py-1 px-2" id="mob-patterns">Patterns</button>
+      <button onclick="switchTab('calculator')" class="mobile-tab-btn text-slate-600 py-1 px-2" id="mob-calculator">Calculator</button>
+      <button onclick="switchTab('notebook')" class="mobile-tab-btn text-slate-600 py-1 px-2" id="mob-notebook">Notebook</button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+
+    <!-- KPI Metric Cards Grid -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow transition">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Passengers</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">891</h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-100 text-slate-600">
+            <i class="fas fa-users text-lg"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 font-medium">Clean manifest sample (15 features)</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow transition">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Overall Survival</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">38.38%</h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+            <i class="fas fa-life-ring text-lg"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 font-medium">342 survivors out of 891 recorded</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow transition">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Female vs Male</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-rose-600 mt-1">74.2% <span class="text-xs font-semibold text-slate-400">vs 18.9%</span></h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-rose-50 text-rose-600">
+            <i class="fas fa-venus text-lg"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 font-medium">Nearly 4x survival edge for women</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow transition">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Class Inequality</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-sky-600 mt-1">63.0% <span class="text-xs font-semibold text-slate-400">vs 24.2%</span></h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-sky-50 text-sky-600">
+            <i class="fas fa-award text-lg"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 font-medium">1st class vs 3rd class (steerage)</p>
+      </div>
+    </section>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="space-y-8">
+      
+      <!-- Core Research Questions Banner -->
+      <div class="bg-gradient-to-r from-sky-900 to-indigo-950 rounded-2xl p-6 sm:p-8 text-white shadow-lg">
+        <div class="max-w-3xl">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/30 mb-3">
+            Learner Guide Hypotheses
+          </span>
+          <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Core Questions Answered with Verified Data</h2>
+          <p class="text-sky-200 text-sm mt-2 leading-relaxed">
+            Every guiding research question established prior to data cleaning has been answered with verified numbers:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-sky-800/60">
+          <div class="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+            <p class="text-xs text-sky-300 font-semibold uppercase">1. Gender Impact</p>
+            <p class="text-sm font-medium mt-1">Women survived at <strong>74.2%</strong> compared to only <strong>18.9%</strong> for men (a 55.3 point margin).</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+            <p class="text-xs text-sky-300 font-semibold uppercase">2. Class Privilege</p>
+            <p class="text-sm font-medium mt-1">1st Class survived at <strong>63.0%</strong>, 2nd Class at <strong>47.3%</strong>, and 3rd Class at only <strong>24.2%</strong>.</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+            <p class="text-xs text-sky-300 font-semibold uppercase">3. Age Priority</p>
+            <p class="text-sm font-medium mt-1">Children (0–12) survived at <strong>58.0%</strong>, whereas seniors (60+) had the lowest rate at <strong>22.7%</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section (Grid) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Survival by Sex -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Survival Rate by Sex</h3>
+              <p class="text-xs text-slate-500 font-medium">Demonstrates the "women first" maritime protocol</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">891 Passengers</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartSex"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Survival by Ticket Class -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Survival Rate by Ticket Class</h3>
+              <p class="text-xs text-slate-500 font-medium">Socioeconomic stratification and boat-deck access</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">1st, 2nd & 3rd</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartClass"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: Survival by Age Cohort -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Survival Rate by Age Band</h3>
+              <p class="text-xs text-slate-500 font-medium">Discretized cohorts (pd.cut bins from 0 to 100)</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">5 Age Bands</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartAge"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 4: Family Cohort Survival -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">The Family Size "Sweet Spot"</h3>
+              <p class="text-xs text-slate-500 font-medium">Solo travelers vs Small families vs Large families</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">Family Size</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartFamily"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Data Cleaning Rationale Table -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <h3 class="text-base font-bold text-slate-900 mb-2">Data Cleaning & Missing Value Justifications</h3>
+        <p class="text-xs text-slate-500 mb-4 font-medium">Systematic handling of missing entries as required by the InternCircle project rubric:</p>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th class="px-4 py-3">Feature</th>
+                <th class="px-4 py-3">Missing Count</th>
+                <th class="px-4 py-3">Missing %</th>
+                <th class="px-4 py-3">Applied Fix</th>
+                <th class="px-4 py-3">Analytical Rationale</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              <tr>
+                <td class="px-4 py-3 font-semibold text-slate-900">age</td>
+                <td class="px-4 py-3 text-amber-600 font-semibold">177</td>
+                <td class="px-4 py-3">19.87%</td>
+                <td class="px-4 py-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-xs">Median by (pclass, sex)</code></td>
+                <td class="px-4 py-3 text-xs leading-relaxed">Age was strongly related to passenger class (1st class median ~36 vs 3rd class median ~22). Group median avoids skewing.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-slate-900">deck</td>
+                <td class="px-4 py-3 text-rose-600 font-semibold">688</td>
+                <td class="px-4 py-3">77.22%</td>
+                <td class="px-4 py-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-xs">df.drop(columns=['deck'])</code></td>
+                <td class="px-4 py-3 text-xs leading-relaxed">Over 77% missing. Imputation would create synthetic noise; dropping rows would discard most of the sample.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-slate-900">embarked</td>
+                <td class="px-4 py-3 text-sky-600 font-semibold">2</td>
+                <td class="px-4 py-3">0.22%</td>
+                <td class="px-4 py-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-xs">Mode ('S' Southampton)</code></td>
+                <td class="px-4 py-3 text-xs leading-relaxed">Over 72% of passengers embarked at Southampton. Mode resolves missingness without altering proportions.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-semibold text-slate-900">duplicates</td>
+                <td class="px-4 py-3 text-slate-500 font-semibold">107</td>
+                <td class="px-4 py-3">12.01%</td>
+                <td class="px-4 py-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-xs">Retained all rows</code></td>
+                <td class="px-4 py-3 text-xs leading-relaxed">Identical rows are genuine passengers who paid identical fares (names/tickets were removed from this dataset).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: HIDDEN PATTERNS -->
+    <div id="tab-patterns" class="hidden space-y-8">
+      
+      <div class="border-b border-slate-200 pb-4">
+        <h2 class="text-2xl font-extrabold text-slate-900">Uncovering Hidden Survival Patterns</h2>
+        <p class="text-sm text-slate-500 mt-1">Deeper multivariate intersections that reveal why aggregate numbers tell only half the story.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Pattern 1 -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold mb-4">
+              01
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">The Steerage Penalty for Women</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">Class × Gender Interaction</p>
+            <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+              While women had an overall 74.2% survival rate, upper-class women were almost fully protected, whereas half of steerage women died:
+            </p>
+            
+            <div class="space-y-2.5 mt-4">
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span>1st Class Female</span>
+                  <span class="text-emerald-600">96.81% (91 / 94)</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                  <div class="bg-emerald-500 h-2 rounded-full" style="width: 96.8%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span>2nd Class Female</span>
+                  <span class="text-emerald-600">92.11% (70 / 76)</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                  <div class="bg-emerald-500 h-2 rounded-full" style="width: 92.1%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span>3rd Class Female</span>
+                  <span class="text-amber-600">50.00% (72 / 144)</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                  <div class="bg-amber-500 h-2 rounded-full" style="width: 50.0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <strong>Key Insight:</strong> 1st-class men (36.89%) survived at nearly triple the rate of 3rd-class men (13.54%), proving wealth partially mitigated the male survival penalty.
+          </div>
+        </div>
+
+        <!-- Pattern 2 -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold mb-4">
+              02
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">The Family Evacuation "Sweet Spot"</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">Non-linear Survival Curve of Family Size</p>
+            <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+              Family size was neither strictly positive nor negative—it followed an inverted U-curve:
+            </p>
+
+            <div class="space-y-3 mt-4 text-xs">
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="font-bold text-slate-900">Solo Travelers (Size 1): 30.35%</span>
+                <p class="text-slate-500 mt-0.5">Had no relatives to sound warnings or secure lifeboats.</p>
+              </div>
+              <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-900">
+                <span class="font-bold">Small Families (Size 2–4): 57.88% (Sweet Spot)</span>
+                <p class="text-emerald-700 mt-0.5">Peaked at 72.41% for families of 4 due to mutual coordination.</p>
+              </div>
+              <div class="p-3 bg-rose-50 rounded-xl border border-rose-100 text-rose-900">
+                <span class="font-bold">Large Families (Size 5+): 14.75% (Collapse)</span>
+                <p class="text-rose-700 mt-0.5">Families of 8 and 11 had 0% survival due to crowded steerage bottlenecks.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <strong>Key Insight:</strong> 1 to 3 companions offered ideal assistance, but coordinating large groups during midnight evacuation was tragic.
+          </div>
+        </div>
+
+        <!-- Pattern 3 -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold mb-4">
+              03
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Class Inequality for Children</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">Age 0–12 Stratified Across Classes</p>
+            <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+              Did "children first" apply equally to poor children in steerage?
+            </p>
+
+            <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-xs font-semibold text-slate-500">2nd Class</p>
+                <p class="text-xl font-extrabold text-emerald-600 mt-1">100%</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">17 of 17 survived</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-xs font-semibold text-slate-500">1st Class</p>
+                <p class="text-xl font-extrabold text-emerald-600 mt-1">75%</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">3 of 4 survived</p>
+              </div>
+              <div class="p-3 bg-rose-50 rounded-xl border border-rose-200">
+                <p class="text-xs font-semibold text-rose-700">3rd Class</p>
+                <p class="text-xl font-extrabold text-rose-600 mt-1">41.7%</p>
+                <p class="text-[10px] text-rose-500 mt-0.5">28 children died</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <strong>Key Insight:</strong> More than half of steerage children perished because their cabins were deep inside the hull with delayed lifeboat access.
+          </div>
+        </div>
+
+        <!-- Pattern 4 -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold mb-4">
+              04
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Embarkation Port & Wealth Proxies</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">Cherbourg vs Southampton vs Queenstown</p>
+            <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+              Why did passengers from Cherbourg survive at a much higher rate (55.4%) than Southampton (33.9%)?
+            </p>
+
+            <div class="mt-4 space-y-2 text-xs">
+              <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+                <span class="font-semibold text-slate-800">Cherbourg (C)</span>
+                <span class="text-slate-600 font-medium">55.4% Survived (Mean Fare: £59.95)</span>
+                <span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded font-semibold text-[11px]">50.6% 1st Class</span>
+              </div>
+              <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+                <span class="font-semibold text-slate-800">Queenstown (Q)</span>
+                <span class="text-slate-600 font-medium">39.0% Survived (Mean Fare: £13.28)</span>
+                <span class="px-2 py-0.5 bg-slate-200 text-slate-800 rounded font-semibold text-[11px]">93.5% 3rd Class</span>
+              </div>
+              <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+                <span class="font-semibold text-slate-800">Southampton (S)</span>
+                <span class="text-slate-600 font-medium">33.9% Survived (Mean Fare: £27.24)</span>
+                <span class="px-2 py-0.5 bg-slate-200 text-slate-800 rounded font-semibold text-[11px]">63.8% 3rd Class</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <strong>Key Insight:</strong> Port was a direct proxy for wealth; Cherbourg had the highest proportion of wealthy Continental travelers.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: SURVIVAL CALCULATOR -->
+    <div id="tab-calculator" class="hidden space-y-6">
+      
+      <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="text-center mb-6">
+          <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-sky-50 text-sky-600 rounded-full">
+            Interactive Tool
+          </span>
+          <h2 class="text-2xl font-bold text-slate-900 mt-2">Titanic Survival Probability Estimator</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Select demographic attributes to see historical estimated survival probability based on the dataset manifest.</p>
+        </div>
+
+        <form id="calcForm" onsubmit="calculateSurvival(event)" class="space-y-4">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Ticket Class (pclass)</label>
+              <select id="calcClass" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                <option value="1">1st Class (Upper Deck)</option>
+                <option value="2">2nd Class (Middle)</option>
+                <option value="3" selected>3rd Class (Steerage)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Biological Sex</label>
+              <select id="calcSex" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                <option value="female">Female</option>
+                <option value="male" selected>Male</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Age (Years)</label>
+              <input type="number" id="calcAge" value="28" min="0" max="90" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Siblings / Spouses</label>
+              <input type="number" id="calcSibsp" value="0" min="0" max="8" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Parents / Children</label>
+              <input type="number" id="calcParch" value="0" min="0" max="6" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Port of Embarkation</label>
+            <select id="calcEmbarked" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <option value="S" selected>Southampton (S)</option>
+              <option value="C">Cherbourg (C)</option>
+              <option value="Q">Queenstown (Q)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition">
+            Estimate Survival Probability
+          </button>
+        </form>
+
+        <!-- Result Box -->
+        <div id="calcResult" class="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+          <p class="text-xs uppercase font-bold text-slate-500 tracking-wider">Estimated Survival Chance</p>
+          <div class="text-4xl font-extrabold text-slate-900 mt-2" id="probText">13.5%</div>
+          <div class="w-full bg-slate-200 rounded-full h-3 max-w-xs mx-auto mt-3 overflow-hidden">
+            <div id="probBar" class="bg-rose-500 h-3 rounded-full transition-all duration-500" style="width: 13.5%"></div>
+          </div>
+          <p class="text-xs text-slate-600 mt-3 font-medium" id="probExplanation">
+            Adult male in 3rd Class traveling alone had the lowest historical survival probability.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- TAB 4: NOTEBOOK VIEWER -->
+    <div id="tab-notebook" class="hidden space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Jupyter Notebook Viewer</h2>
+          <p class="text-xs text-slate-500 font-medium">Viewing full executed <code class="text-sky-600">titanic_eda.html</code> containing all steps and code</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <a href="titanic_eda.html" target="_blank" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center space-x-1.5">
+            <i class="fas fa-external-link-alt text-xs"></i>
+            <span>Open Standalone</span>
+          </a>
+          <a href="titanic_eda.ipynb" download class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center space-x-1.5">
+            <i class="fas fa-download text-xs"></i>
+            <span>Download .ipynb</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Iframe Container -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm h-[800px]">
+        <iframe src="titanic_eda.html" class="w-full h-full border-0" title="Titanic Notebook Viewer"></iframe>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div>
+        <p class="font-medium text-slate-700">Exploratory Data Analysis on Titanic Dataset</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Built with Python, Pandas, Matplotlib, Seaborn & deployed on Vercel</p>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="https://github.com/ashisbalodia1/EDA-on-Titanic-" target="_blank" class="hover:text-slate-800 transition">GitHub</a>
+        <a href="titanic_eda.html" target="_blank" class="hover:text-slate-800 transition">Notebook HTML</a>
+        <a href="titanic.csv" download class="hover:text-slate-800 transition">Dataset (CSV)</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts: Tabs, Charts, and Calculator -->
+  <script>
+    // Tab Switching Function
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'patterns', 'calculator', 'notebook'];
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        const nav = document.getElementById('nav-' + t);
+        const mob = document.getElementById('mob-' + t);
+
+        if (t === tabId) {
+          el.classList.remove('hidden');
+          if (nav) nav.classList.add('active');
+          if (mob) mob.className = "mobile-tab-btn text-sky-600 font-bold py-1 px-2";
+        } else {
+          el.classList.add('hidden');
+          if (nav) nav.classList.remove('active');
+          if (mob) mob.className = "mobile-tab-btn text-slate-600 py-1 px-2";
+        }
+      });
+    }
+
+    // Chart.js Visualizations
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Chart Sex
+      new Chart(document.getElementById('chartSex'), {
+        type: 'bar',
+        data: {
+          labels: ['Female', 'Male'],
+          datasets: [{
+            label: 'Survival Rate (%)',
+            data: [74.20, 18.89],
+            backgroundColor: ['#f43f5e', '#0284c7'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      });
+
+      // 2. Chart Class
+      new Chart(document.getElementById('chartClass'), {
+        type: 'bar',
+        data: {
+          labels: ['1st Class', '2nd Class', '3rd Class'],
+          datasets: [{
+            label: 'Survival Rate (%)',
+            data: [62.96, 47.28, 24.24],
+            backgroundColor: ['#0369a1', '#38bdf8', '#94a3b8'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      });
+
+      // 3. Chart Age
+      new Chart(document.getElementById('chartAge'), {
+        type: 'bar',
+        data: {
+          labels: ['Child (0-12)', 'Teen (12-18)', 'Adult (18-40)', 'Middle-aged (40-60)', 'Senior (60+)'],
+          datasets: [{
+            label: 'Survival Rate (%)',
+            data: [57.97, 42.86, 36.05, 39.06, 22.73],
+            backgroundColor: '#0d9488',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      });
+
+      // 4. Chart Family
+      new Chart(document.getElementById('chartFamily'), {
+        type: 'bar',
+        data: {
+          labels: ['Solo Traveler (1)', 'Small Family (2-4)', 'Large Family (5+)'],
+          datasets: [{
+            label: 'Survival Rate (%)',
+            data: [30.35, 57.88, 14.75],
+            backgroundColor: ['#64748b', '#10b981', '#ef4444'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      });
+    });
+
+    // Survival Probability Estimator (Empirical Model)
+    function calculateSurvival(e) {
+      e.preventDefault();
+      const pclass = parseInt(document.getElementById('calcClass').value);
+      const sex = document.getElementById('calcSex').value;
+      const age = parseFloat(document.getElementById('calcAge').value) || 28;
+      const sibsp = parseInt(document.getElementById('calcSibsp').value) || 0;
+      const parch = parseInt(document.getElementById('calcParch').value) || 0;
+      const embarked = document.getElementById('calcEmbarked').value;
+      
+      const familySize = sibsp + parch + 1;
+
+      // Base rate derived from class x sex empirical subgroup
+      let prob = 0;
+      if (pclass === 1 && sex === 'female') prob = 96.8;
+      else if (pclass === 2 && sex === 'female') prob = 92.1;
+      else if (pclass === 3 && sex === 'female') prob = 50.0;
+      else if (pclass === 1 && sex === 'male') prob = 36.9;
+      else if (pclass === 2 && sex === 'male') prob = 15.7;
+      else if (pclass === 3 && sex === 'male') prob = 13.5;
+
+      // Age modifiers
+      if (age <= 12) {
+        if (pclass <= 2) prob = Math.min(100, prob + 15);
+        else prob = Math.min(65, prob + 10);
+      } else if (age >= 60) {
+        prob = Math.max(5, prob - 12);
+      }
+
+      // Family size modifiers
+      if (familySize >= 2 && familySize <= 4) {
+        prob = Math.min(99, prob + 8);
+      } else if (familySize >= 5) {
+        prob = Math.max(5, prob - 25);
+      }
+
+      // Port slight modifier
+      if (embarked === 'C') prob = Math.min(99, prob + 3);
+
+      prob = Math.round(prob * 10) / 10;
+
+      // UI Update
+      const probText = document.getElementById('probText');
+      const probBar = document.getElementById('probBar');
+      const probExp = document.getElementById('probExplanation');
+
+      probText.innerText = prob + '%';
+      probBar.style.width = prob + '%';
+
+      if (prob >= 70) {
+        probBar.className = "bg-emerald-500 h-3 rounded-full transition-all duration-500";
+        probText.className = "text-4xl font-extrabold text-emerald-600 mt-2";
+        probExp.innerText = "Very high probability of survival due to priority evacuation protocol (" + (sex === 'female' ? 'Female' : 'Child') + " in Class " + pclass + ").";
+      } else if (prob >= 40) {
+        probBar.className = "bg-amber-500 h-3 rounded-full transition-all duration-500";
+        probText.className = "text-4xl font-extrabold text-amber-600 mt-2";
+        probExp.innerText = "Moderate chance of survival. Small family and class factors balance out risks.";
+      } else {
+        probBar.className = "bg-rose-500 h-3 rounded-full transition-all duration-500";
+        probText.className = "text-4xl font-extrabold text-rose-600 mt-2";
+        probExp.innerText = "Low historical survival likelihood due to steerage location, male protocol, or family evacuation bottlenecks.";
+      }
+    }
+  </script>
+</body>
+</html>

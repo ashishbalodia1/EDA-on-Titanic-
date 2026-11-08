@@ -1,6 +1,22 @@
 # Titanic Dataset - Exploratory Data Analysis (EDA)
 
-This project is an Exploratory Data Analysis (EDA) on the Titanic passenger dataset using Python and Pandas. The goal is to clean the data, analyze demographic patterns, and uncover key factors that influenced survival.
+This project is an Exploratory Data Analysis (EDA) on the Titanic passenger dataset using Python and Pandas. The goal is to clean the data, analyze demographic patterns, uncover key survival factors, and provide a production-ready interactive web application deployable on **Vercel**.
+
+---
+
+## 🌐 Live Web Application & Vercel Deployment
+The repository includes a production-ready static web application (`index.html` & `vercel.json`) that provides:
+- **Interactive KPI Dashboard & Charts:** Visualizing survival rates by sex, class, age, and family cohorts using Chart.js.
+- **Deep Dives into Hidden Patterns:** Detailed breakdown of the steerage penalty, family size sweet spot, and child survival.
+- **Interactive Survival Probability Estimator:** Live calculator tool allowing users to enter custom passenger attributes and get historical survival estimates.
+- **Embedded Jupyter Notebook Viewer:** Instant access to the rendered `titanic_eda.html` without leaving the page.
+
+### Deploy to Vercel in 1 Minute:
+1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+2. Click **"Add New Project"** > **"Import Git Repository"**.
+3. Select `EDA-on-Titanic-` from your repository list.
+4. Leave all build settings as default (Framework: **Other**, Build Command: empty, Output Directory: empty).
+5. Click **"Deploy"** — Vercel will deploy it in seconds and provide a live URL (e.g. `https://eda-on-titanic-ashish.vercel.app`)!
 
 ---
 
@@ -91,19 +107,22 @@ Before exploring the data, three main questions were defined:
 ---
 
 ## 📁 Files Included
+- `index.html` — Interactive production dashboard & survival estimator for Vercel.
+- `vercel.json` — Vercel deployment configuration.
 - `titanic_eda.ipynb` — The complete Jupyter Notebook with clean code, comments, tables, and charts.
 - `titanic_eda.html` — The exported HTML report of the notebook.
 - `titanic.csv` — Titanic passenger dataset.
-- `README.md` — Project summary and findings.
+- `README.md` — Project summary, findings, and deployment guide.
 
 ---
 
-## 💻 How to Run
-1. Install dependencies:
+## 💻 How to Run Locally
+1. Run local web server:
    ```bash
-   pip install pandas numpy matplotlib seaborn jupyter
+   python -m http.server 3000
    ```
-2. Open the notebook:
+   Open `http://localhost:3000` in your browser.
+2. Or run the Jupyter notebook:
    ```bash
    jupyter notebook titanic_eda.ipynb
    ```

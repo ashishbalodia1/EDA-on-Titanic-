@@ -124,6 +124,7 @@ Before exploring the data, three main questions were defined:
    Open `http://localhost:3000` in your browser.
 2. Or run the Jupyter notebook:
    ```bash
+   pip install -r requirements-dev.txt
    jupyter notebook titanic_eda.ipynb
    ```
 
